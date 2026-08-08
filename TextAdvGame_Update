@@ -1,0 +1,1768 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BACKDOOR</title>
+  <style>
+    :root {
+      --green: #28ff68;
+      --dim: #108b34;
+      --black: #020602;
+      --glow: rgba(40, 255, 104, 0.45);
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: var(--black);
+      color: var(--green);
+      overflow: hidden;
+      font-family: "Courier New", Courier, monospace;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: stretch;
+    }
+
+    #screen {
+      position: relative;
+      box-sizing: border-box;
+      width: 100vw;
+      height: 100vh;
+      padding: 18px 20px 24px;
+      background:
+        radial-gradient(circle at center, rgba(40, 255, 104, 0.08), transparent 64%),
+        #020602;
+      text-shadow: 0 0 6px var(--glow);
+      line-height: 1.22;
+      font-size: clamp(13px, 1.55vw, 18px);
+    }
+
+    #screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(40, 255, 104, 0.08) 0,
+        rgba(40, 255, 104, 0.08) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode: screen;
+      opacity: 0.45;
+    }
+
+    #screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 80px #000, inset 0 0 18px rgba(40, 255, 104, 0.25);
+    }
+
+    #terminal {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      white-space: pre-wrap;
+      overflow: hidden;
+      word-break: break-word;
+    }
+
+    .home {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100%;
+      text-align: left;
+      animation: homeGlitch 3.4s steps(2) infinite;
+    }
+
+    .title {
+      width: 100%;
+      margin: 0 0 0.25em;
+      font-size: clamp(28px, 7vw, 76px);
+      line-height: 0.92;
+      text-align: center;
+      text-transform: uppercase;
+      animation: glitch 1.8s steps(2) infinite;
+    }
+
+    .home .title {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .trs-screen {
+      position: relative;
+      box-sizing: border-box;
+      width: min(76em, 100%);
+      min-height: calc(100vh - 9em);
+      margin: 0 auto;
+      padding: 1em;
+      border: 2px solid var(--green);
+      box-shadow:
+        inset 0 0 22px rgba(40, 255, 104, 0.22),
+        0 0 18px rgba(40, 255, 104, 0.18);
+      overflow: hidden;
+    }
+
+    .trs-screen::before {
+      content: "TRS-80 MODEL I  DISPLAY  /  64 X 16  /  VIDEO RAM: UNSTABLE";
+      display: block;
+      margin-bottom: 0.8em;
+      color: var(--dim);
+    }
+
+    .trs-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(transparent 0 68%, rgba(40, 255, 104, 0.11) 69%, transparent 71%),
+        repeating-linear-gradient(to right, transparent 0 11px, rgba(40, 255, 104, 0.05) 12px);
+      animation: tear 4.8s steps(3) infinite;
+      opacity: 0.4;
+    }
+
+    .menu {
+      display: grid;
+      gap: 0.45em;
+      width: min(34em, 100%);
+      margin-top: 0.2em;
+    }
+
+    .menu-button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0.25em 0.5em;
+      border: 1px solid var(--green);
+      background: transparent;
+      color: var(--green);
+      font: inherit;
+      text-align: left;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-shadow: inherit;
+      box-shadow: inset 0 0 10px rgba(40, 255, 104, 0.12);
+    }
+
+    .menu-button:hover,
+    .menu-button:focus {
+      outline: none;
+      background: rgba(40, 255, 104, 0.12);
+    }
+
+    .guide {
+      box-sizing: border-box;
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: 2em;
+      text-align: left;
+    }
+
+    .pellet-game {
+      box-sizing: border-box;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0.4em;
+      overflow: hidden;
+    }
+
+    .pellet-title {
+      text-align: center;
+      font-size: clamp(18px, 3vw, 34px);
+    }
+
+    .pellet-board {
+      align-self: center;
+      justify-self: center;
+      margin: 0;
+      line-height: 1;
+      font-size: clamp(12px, 2.2vw, 24px);
+      white-space: pre;
+      user-select: none;
+    }
+
+    .pellet-status {
+      color: var(--dim);
+      text-align: center;
+    }
+
+    .reboot-screen {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      background: #000;
+      color: var(--green);
+      text-align: left;
+    }
+
+    .reboot-box {
+      width: min(42em, 92vw);
+    }
+
+    .reboot-message {
+      margin-bottom: 1em;
+      text-align: center;
+    }
+
+    .reboot-track {
+      width: 100%;
+      height: 1.2em;
+      border: 1px solid var(--green);
+      box-shadow: inset 0 0 10px rgba(40, 255, 104, 0.16);
+    }
+
+    .reboot-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--glow);
+    }
+
+    .reboot-label {
+      margin-top: 0.5em;
+      text-align: center;
+    }
+
+    .final-screen {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      background: #000;
+      color: #fff;
+      text-shadow: none;
+      text-align: center;
+    }
+
+    .final-type {
+      min-height: 3em;
+      font-size: clamp(24px, 5vw, 64px);
+      line-height: 1.25;
+      white-space: pre-wrap;
+    }
+
+    .home-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr minmax(17em, 24em);
+      gap: 1em;
+      align-items: start;
+    }
+
+    .boot-panel {
+      min-height: 18em;
+    }
+
+    .tiny-code {
+      position: absolute;
+      right: 1em;
+      bottom: 1em;
+      min-width: 18em;
+      color: var(--green);
+      opacity: 0;
+      animation: codeFlash 7.2s steps(1) infinite;
+      pointer-events: none;
+    }
+
+    .tiny-code::before {
+      content: "";
+      white-space: pre;
+      animation: codeBits 7.2s steps(1) infinite;
+    }
+
+    @media (max-width: 720px) {
+      .home-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tiny-code {
+        left: 1em;
+        right: auto;
+        bottom: 0.7em;
+      }
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.62em;
+      height: 1em;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      background: var(--green);
+      box-shadow: 0 0 7px var(--glow);
+      animation: blink 1s steps(1) infinite;
+    }
+
+    .dim {
+      color: var(--dim);
+      text-shadow: 0 0 4px rgba(40, 255, 104, 0.18);
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+
+    @keyframes jitter {
+      0%, 100% { transform: translate(0, 0); }
+      35% { transform: translate(1px, 0); }
+      70% { transform: translate(-1px, 1px); }
+    }
+
+    @keyframes glitch {
+      0%, 88%, 100% { text-shadow: 0 0 6px var(--glow); }
+      90% { text-shadow: 2px 0 0 var(--green), -2px 0 0 var(--dim); }
+      94% { text-shadow: -3px 0 0 var(--green), 3px 0 0 var(--dim); }
+    }
+
+    @keyframes homeGlitch {
+      0%, 92%, 100% { filter: none; }
+      93% { filter: brightness(1.7) contrast(1.4); }
+      94% { filter: brightness(0.6) contrast(2); }
+      95% { filter: none; }
+    }
+
+    @keyframes tear {
+      0%, 88%, 100% { transform: translateY(-28%); }
+      90% { transform: translateY(2%); }
+      92% { transform: translateY(-9%); }
+      94% { transform: translateY(38%); }
+    }
+
+    @keyframes codeFlash {
+      0%, 8%, 12%, 24%, 28%, 40%, 44%, 56%, 60%, 72%, 76%, 88%, 92%, 100% { opacity: 0; }
+      9%, 11%, 25%, 27%, 41%, 43%, 57%, 59%, 73%, 75%, 89%, 91% { opacity: 0.95; }
+    }
+
+    @keyframes codeBits {
+      0%, 8% { content: ""; }
+      9%, 11% { content: "A$=\"SYSOP\""; }
+      12%, 24% { content: ""; }
+      25%, 27% { content: "B$=\"ZERO\""; }
+      28%, 40% { content: ""; }
+      41%, 43% { content: "C$=\"DAY\""; }
+      44%, 56% { content: ""; }
+      57%, 59% { content: "PRINT A$+\" \"+B$+C$"; }
+      60%, 72% { content: ""; }
+      73%, 75% { content: "REM ENTER AT PROMPT"; }
+      76%, 88% { content: ""; }
+      89%, 91% { content: "CMD=SYSOP ZERODAY"; }
+      92%, 100% { content: ""; }
+    }
+  </style>
+</head>
+<body>
+  <main id="screen" aria-label="BACKDOOR terminal">
+    <div id="terminal"></div>
+  </main>
+
+  <script>
+    const terminal = document.getElementById("terminal");
+    const maxLines = 420;
+    let pelletTimer = null;
+    let rebootTimer = null;
+    let endingTimer = null;
+    const konamiCode = ["ARROWUP", "ARROWUP", "ARROWDOWN", "ARROWDOWN", "ARROWLEFT", "ARROWRIGHT", "ARROWLEFT", "ARROWRIGHT", "B", "A"];
+    let konamiIndex = 0;
+
+    const state = {
+      mode: "home",
+      cwd: ["SYS"],
+      user: "GUEST",
+      input: "",
+      history: [],
+      historyIndex: -1,
+      completed: new Set(),
+      dirs: new Set([
+        "SYS",
+        "SYS:GAMES",
+        "SYS:USERS",
+        "SYS:GAMES:MAZE"
+      ]),
+      flags: new Set(),
+      vars: {},
+      konamiRebooted: false
+    };
+
+    const gameOrder = [
+      "MAZE",
+      "SHOOTER",
+      "PADDLE",
+      "TANK",
+      "DUNGEON",
+      "PLATFORM",
+      "RACING",
+      "TEXTADV"
+    ];
+
+    const unlockAfter = {
+      MAZE: ["SYS:TEST", "SYS:GAMES:SHOOTER"],
+      SHOOTER: ["SYS:GAMES:PADDLE", "SYS:BACKUP"],
+      PADDLE: ["SYS:GAMES:TANK"],
+      TANK: ["SYS:GAMES:DUNGEON"],
+      DUNGEON: ["SYS:ADMIN", "SYS:GAMES:PLATFORM"],
+      PLATFORM: ["SYS:GAMES:RACING"],
+      RACING: ["SYS:GAMES:TEXTADV"],
+      TEXTADV: ["SYS:UNKNOWN"]
+    };
+
+    const passwords = {
+      DEV_07: "GHOST",
+      OPERATOR: "PELLET",
+      SYSOP: "BACKDOOR"
+    };
+
+    function key(path) {
+      return Array.isArray(path) ? path.join(":") : path;
+    }
+
+    function cwd() {
+      return key(state.cwd);
+    }
+
+    function line(text = "") {
+      const div = document.createElement("div");
+      div.textContent = text;
+      terminal.appendChild(div);
+      trim();
+    }
+
+    function block(text) {
+      String(text).replace(/\r/g, "").split("\n").forEach(line);
+    }
+
+    function trim() {
+      while (terminal.children.length > maxLines) {
+        terminal.removeChild(terminal.firstChild);
+      }
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function promptText() {
+      return `${cwd()}>`;
+    }
+
+    function drawPrompt() {
+      const existing = document.getElementById("activePrompt");
+      if (existing) existing.remove();
+      const div = document.createElement("div");
+      div.id = "activePrompt";
+      div.textContent = promptText() + state.input;
+      const cursor = document.createElement("span");
+      cursor.className = "cursor";
+      div.appendChild(cursor);
+      terminal.appendChild(div);
+      trim();
+    }
+
+    function commitPrompt() {
+      const existing = document.getElementById("activePrompt");
+      if (existing) {
+        existing.textContent = promptText() + state.input;
+        existing.removeAttribute("id");
+      }
+    }
+
+    function stopEnding() {
+      if (endingTimer) {
+        clearInterval(endingTimer);
+        endingTimer = null;
+      }
+    }
+
+    function stopReboot() {
+      if (rebootTimer) {
+        clearInterval(rebootTimer);
+        rebootTimer = null;
+      }
+    }
+
+    function renderRebootScreen() {
+      stopPelletGame();
+      stopReboot();
+      state.mode = "reboot";
+      let progress = 0;
+      terminal.innerHTML = `<div class="reboot-screen">
+<div class="reboot-box">
+  <div class="reboot-message">YOUR CONNECTION WAS INTERRUPTED</div>
+  <div class="reboot-track"><div id="rebootFill" class="reboot-fill"></div></div>
+  <div id="rebootLabel" class="reboot-label">REBOOTING... 0%</div>
+</div>
+</div>`;
+      rebootTimer = setInterval(() => {
+        progress = Math.min(100, progress + 4);
+        const fill = document.getElementById("rebootFill");
+        const label = document.getElementById("rebootLabel");
+        if (fill) fill.style.width = progress + "%";
+        if (label) label.textContent = `REBOOTING... ${progress}%`;
+        if (progress >= 100) {
+          stopReboot();
+          resetGameState();
+          state.konamiRebooted = true;
+          renderHome();
+        }
+      }, 90);
+    }
+
+    function checkKonami(keyName) {
+      if (keyName === konamiCode[konamiIndex]) {
+        konamiIndex += 1;
+        if (konamiIndex === konamiCode.length) {
+          konamiIndex = 0;
+          renderRebootScreen();
+          return true;
+        }
+        return false;
+      }
+      konamiIndex = keyName === konamiCode[0] ? 1 : 0;
+      return false;
+    }
+
+    function resetGameState() {
+      state.cwd = ["SYS"];
+      state.user = "GUEST";
+      state.input = "";
+      state.history = [];
+      state.historyIndex = -1;
+      state.completed = new Set();
+      state.dirs = new Set([
+        "SYS",
+        "SYS:GAMES",
+        "SYS:USERS",
+        "SYS:GAMES:MAZE"
+      ]);
+      state.flags = new Set();
+      state.vars = {};
+      state.konamiRebooted = false;
+    }
+
+    function boot() {
+      stopEnding();
+      stopReboot();
+      stopPelletGame();
+      state.mode = "game";
+      terminal.textContent = "";
+      if (state.konamiRebooted) {
+        line("THE KONAMI CODE'S KIND OF ANNOYING, ISN'T IT?");
+        line("");
+        state.konamiRebooted = false;
+      }
+      block(`TRS-80 MODEL I  LEVEL II BASIC
+MEMORY SIZE?  16K
+RADIO SHACK DISK SYSTEM
+READY
+RUN "BACKDOOR/CMD"
+
+BACKDOOR (C) 1981 NIGHT SHIFT SOFTWARE
+BACKDOOR REMOTE MAINTENANCE IMAGE
+TERMINAL: GREEN-PHOSPHOR / KEYBOARD ONLY
+
+TYPE HELP FOR COMMANDS.
+TYPE DIR TO LIST FILES.
+TYPE RUN MAZE TO BEGIN THE FIRST INSPECTION.
+`);
+      drawPrompt();
+    }
+
+    function renderHome() {
+      stopEnding();
+      stopReboot();
+      stopPelletGame();
+      state.mode = "home";
+      terminal.innerHTML = `<div class="home">
+<div class="title" data-action="pellet">BACKDOOR</div>
+<div class="trs-screen">
+  <div class="home-grid">
+<pre class="boot-panel">RADIO SHACK TRS-80 MODEL I
+LEVEL II BASIC 16K
+
+MEMORY SIZE?  15572
+READY
+LOAD "BACKDOOR"
+
+?SN ERROR IN 1981
+?REDO FROM START
+
+BACKDOOR LOADER FOUND
+SCREEN MEMORY TEARING
+DOOR TABLE: PRESENT
+</pre>
+    <div>
+      <div class="menu">
+        <button class="menu-button" data-action="play">1. PLAY</button>
+        <button class="menu-button" data-action="guide-confirm">2. HACKER'S GUIDE</button>
+      </div>
+      <pre class="machine">KEYBOARD ONLY
+PRESS 1 OR 2
+
+THE SCREEN IS NOT STABLE.
+SOME BYTES DO NOT WANT TO STAY HIDDEN.</pre>
+    </div>
+  </div>
+  <div class="tiny-code" aria-hidden="true"></div>
+</div>
+</div>`;
+    }
+
+    const pelletTemplate = [
+      "###################",
+      "#........#........#",
+      "#.###.##.#.##.###.#",
+      "#o#.............#o#",
+      "#.###.#.###.#.###.#",
+      "#.....#..#..#.....#",
+      "#####.## # ##.#####",
+      "    #.       .#    ",
+      "#####.# ### #.#####",
+      "#........#........#",
+      "#.###.##.#.##.###.#",
+      "#o..#.........#..o#",
+      "###.#.#.###.#.#.###",
+      "#.....#..#..#.....#",
+      "###################"
+    ];
+
+    function stopPelletGame() {
+      if (pelletTimer) {
+        clearInterval(pelletTimer);
+        pelletTimer = null;
+      }
+    }
+
+    function renderPelletGame() {
+      stopPelletGame();
+      state.mode = "pellet";
+      state.pellet = {
+        map: pelletTemplate.map((row) => row.split("")),
+        player: { x: 9, y: 11 },
+        dir: { x: 0, y: 0 },
+        next: { x: 0, y: 0 },
+        ghosts: [
+          { x: 8, y: 7, dx: 1, dy: 0 },
+          { x: 10, y: 7, dx: -1, dy: 0 },
+          { x: 9, y: 8, dx: 0, dy: -1 }
+        ],
+        score: 0,
+        lives: 3,
+        over: false,
+        won: false,
+        tick: 0
+      };
+      terminal.innerHTML = `<div class="pellet-game">
+<div class="pellet-title">PELLET CHASE / BACKDOOR FIELD COPY</div>
+<pre id="pelletBoard" class="pellet-board"></pre>
+<div id="pelletStatus" class="pellet-status"></div>
+</div>`;
+      drawPelletGame();
+      pelletTimer = setInterval(tickPelletGame, 170);
+    }
+
+    function pelletOpen(x, y) {
+      const game = state.pellet;
+      if (!game) return false;
+      if (y < 0 || y >= game.map.length) return false;
+      if (x < 0) x = game.map[0].length - 1;
+      if (x >= game.map[0].length) x = 0;
+      return game.map[y][x] !== "#";
+    }
+
+    function wrapPellet(pos) {
+      const width = state.pellet.map[0].length;
+      if (pos.x < 0) pos.x = width - 1;
+      if (pos.x >= width) pos.x = 0;
+    }
+
+    function drawPelletGame() {
+      const game = state.pellet;
+      if (!game) return;
+      const board = game.map.map((row) => row.slice());
+      game.ghosts.forEach((ghost) => {
+        if (board[ghost.y] && board[ghost.y][ghost.x] !== "#") board[ghost.y][ghost.x] = "G";
+      });
+      board[game.player.y][game.player.x] = "C";
+      const boardNode = document.getElementById("pelletBoard");
+      const statusNode = document.getElementById("pelletStatus");
+      if (boardNode) boardNode.textContent = board.map((row) => row.join("")).join("\n");
+      if (statusNode) {
+        const ending = game.won ? "  CLEAR. PRESS R TO RESTART OR B FOR BACKDOOR." :
+          game.over ? "  CAUGHT. PRESS R TO RESTART OR B FOR BACKDOOR." :
+          "  ARROWS/WASD MOVE. B RETURNS.";
+        statusNode.textContent = `SCORE ${String(game.score).padStart(4, "0")}  LIVES ${game.lives}${ending}`;
+      }
+    }
+
+    function pelletDotsLeft() {
+      return state.pellet.map.some((row) => row.some((cell) => cell === "." || cell === "o"));
+    }
+
+    function movePelletPlayer() {
+      const game = state.pellet;
+      const nextTurn = { x: game.player.x + game.next.x, y: game.player.y + game.next.y };
+      wrapPellet(nextTurn);
+      if (pelletOpen(nextTurn.x, nextTurn.y)) game.dir = { ...game.next };
+      const next = { x: game.player.x + game.dir.x, y: game.player.y + game.dir.y };
+      wrapPellet(next);
+      if (!pelletOpen(next.x, next.y)) return;
+      game.player = next;
+      const cell = game.map[next.y][next.x];
+      if (cell === "." || cell === "o") {
+        game.score += cell === "o" ? 50 : 10;
+        game.map[next.y][next.x] = " ";
+      }
+      if (!pelletDotsLeft()) {
+        game.won = true;
+        game.over = true;
+        stopPelletGame();
+      }
+    }
+
+    function movePelletGhosts() {
+      const game = state.pellet;
+      const dirs = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 }
+      ];
+      game.ghosts.forEach((ghost, index) => {
+        const options = dirs.filter((dir) => {
+          const test = { x: ghost.x + dir.x, y: ghost.y + dir.y };
+          wrapPellet(test);
+          return pelletOpen(test.x, test.y);
+        });
+        options.sort((a, b) => {
+          const ax = (ghost.x + a.x + game.map[0].length) % game.map[0].length;
+          const bx = (ghost.x + b.x + game.map[0].length) % game.map[0].length;
+          const ad = Math.abs(ax - game.player.x) + Math.abs(ghost.y + a.y - game.player.y);
+          const bd = Math.abs(bx - game.player.x) + Math.abs(ghost.y + b.y - game.player.y);
+          return ad - bd;
+        });
+        const choice = options[(game.tick + index) % 3 === 0 ? 0 : Math.min(index, options.length - 1)] || { x: 0, y: 0 };
+        ghost.x += choice.x;
+        ghost.y += choice.y;
+        wrapPellet(ghost);
+      });
+    }
+
+    function pelletCaught() {
+      const game = state.pellet;
+      return game.ghosts.some((ghost) => ghost.x === game.player.x && ghost.y === game.player.y);
+    }
+
+    function resetPelletPositions() {
+      const game = state.pellet;
+      game.player = { x: 9, y: 11 };
+      game.dir = { x: 0, y: 0 };
+      game.next = { x: 0, y: 0 };
+      game.ghosts = [
+        { x: 8, y: 7, dx: 1, dy: 0 },
+        { x: 10, y: 7, dx: -1, dy: 0 },
+        { x: 9, y: 8, dx: 0, dy: -1 }
+      ];
+    }
+
+    function tickPelletGame() {
+      const game = state.pellet;
+      if (!game || game.over) return;
+      game.tick += 1;
+      movePelletPlayer();
+      if (pelletCaught()) {
+        game.lives -= 1;
+        if (game.lives <= 0) {
+          game.over = true;
+          stopPelletGame();
+        } else {
+          resetPelletPositions();
+        }
+        drawPelletGame();
+        return;
+      }
+      movePelletGhosts();
+      if (pelletCaught()) {
+        game.lives -= 1;
+        if (game.lives <= 0) {
+          game.over = true;
+          stopPelletGame();
+        } else {
+          resetPelletPositions();
+        }
+      }
+      drawPelletGame();
+    }
+
+    function renderGuideConfirm() {
+      state.mode = "confirm";
+      terminal.innerHTML = `<div class="home">
+<div class="title">BACKDOOR</div>
+<pre class="machine">HACKER'S GUIDE CONTAINS THE FULL WALKTHROUGH.
+
+ARE YOU SURE?
+
+THIS WILL SPOIL EVERY BACKDOOR, PASSWORD, MEMORY ADDRESS,
+HIDDEN PARTITION, AND THE MASTER KERNEL COMMAND.</pre>
+<div class="menu">
+  <button class="menu-button" data-action="guide">Y. YES, OPEN GUIDE</button>
+  <button class="menu-button" data-action="home">N. NO, RETURN</button>
+</div>
+</div>`;
+    }
+
+    function renderGuide() {
+      state.mode = "guide";
+      terminal.innerHTML = `<div class="guide">BACKDOOR - HACKER'S GUIDE
+
+START:
+  DIR
+  TYPE WELCOME.TXT
+  CD GAMES
+  CD MAZE
+
+1. MAZE
+  Useful files: MAZE.BAS, OP_MENU.TXT, CABINET.LOG
+  Commands:
+    OPMENU
+    OPEN EXIT
+
+2. SHOOTER
+  New paths: SYS:TEST and SYS:GAMES:SHOOTER
+  Clues: SYS:TEST/FREEZE.DOC, ADDR-2A.MAP, SHOOTER/MEMDUMP.HEX
+  Command:
+    POKE 2A FF
+
+3. PADDLE
+  New path: SYS:BACKUP
+  Clue: SYS:BACKUP/PADDLE.SAV
+  Optional decode:
+    HEX 42 4F 55 4E 43 45 20 39 39 39
+  Command:
+    BOUNCE 999
+
+4. TANK
+  Clues: SYS:BACKUP/TANK.MAN and SYS:USERS/DEV_07.LOG
+  Commands:
+    LOGIN DEV_07 GHOST
+    SET SHELLS 00
+
+5. DUNGEON
+  Clues: DUNGEON/GATE.DMP and ADMIN/DUNGEON.ASM
+  Command:
+    POKE C0DE 01
+
+6. ARCHIVE AND PLATFORM
+  New path: SYS:ADMIN
+  Commands:
+    MOUNT ARCHIVE
+    SCAN 113
+    JUMPTEST 7
+
+7. RACING
+  Clues: RACING/TIMING.TXT and RACING/LAPS.MEM
+  Commands:
+    SET LAP FF
+    SET SPEED 00
+
+8. TEXT ADVENTURE
+  Clues: TEXTADV/ROOMS.TXT, VERBS.DOC, ADVENT.BAS
+  Command:
+    SAY BACKDOOR
+
+FINAL KERNEL
+  New path: SYS:UNKNOWN
+  Read:
+    TYPE EIGHT.DOORS
+    TYPE KERNEL.LOG
+    TYPE LASTUSER.TXT
+  Master command:
+    KERNEL BACKDOOR 1981
+
+FAST COMPLETE ROUTE:
+  OPEN EXIT
+  POKE 2A FF
+  BOUNCE 999
+  LOGIN DEV_07 GHOST
+  SET SHELLS 00
+  POKE C0DE 01
+  MOUNT ARCHIVE
+  JUMPTEST 7
+  SET LAP FF
+  SET SPEED 00
+  SAY BACKDOOR
+  KERNEL BACKDOOR 1981
+
+[B] BACK TO HOME</div>`;
+    }
+
+    function allDirs() {
+      const dirs = {
+        "SYS": ["GAMES", "USERS", "TEST", "ADMIN", "ARCHIVE", "BACKUP", "UNKNOWN"],
+        "SYS:GAMES": gameOrder,
+        "SYS:USERS": [],
+        "SYS:TEST": [],
+        "SYS:ADMIN": [],
+        "SYS:ARCHIVE": [],
+        "SYS:BACKUP": [],
+        "SYS:UNKNOWN": [],
+        "SYS:GAMES:MAZE": [],
+        "SYS:GAMES:SHOOTER": [],
+        "SYS:GAMES:PADDLE": [],
+        "SYS:GAMES:TANK": [],
+        "SYS:GAMES:DUNGEON": [],
+        "SYS:GAMES:PLATFORM": [],
+        "SYS:GAMES:RACING": [],
+        "SYS:GAMES:TEXTADV": []
+      };
+      return dirs;
+    }
+
+    function allFiles() {
+      return {
+        "SYS": ["WELCOME.TXT", "TREE.TXT", "NOTICE.LOG"],
+        "SYS:GAMES": ["CATALOG.TXT", "LOCKS.TXT"],
+        "SYS:USERS": ["GUEST.LOG", "DEV_07.LOG"],
+        "SYS:TEST": ["FREEZE.DOC", "ADDR-2A.MAP", "ODD.MSG"],
+        "SYS:ADMIN": ["DUNGEON.ASM", "KEYCARD.TXT", "COREWARN.LOG"],
+        "SYS:ARCHIVE": ["SECTOR.113", "PLATNOTE.TXT", "DELETED.LST"],
+        "SYS:BACKUP": ["PADDLE.SAV", "TANK.MAN", "OLDMAIL.07"],
+        "SYS:UNKNOWN": ["CORE.DIR", "EIGHT.DOORS", "KERNEL.LOG", "LASTUSER.TXT"],
+        "SYS:GAMES:MAZE": ["MAZE.BAS", "OP_MENU.TXT", "CABINET.LOG"],
+        "SYS:GAMES:SHOOTER": ["ALIEN.BAS", "MEMDUMP.HEX", "INVADERS.LOG"],
+        "SYS:GAMES:PADDLE": ["PADDLE.BAS", "BALL.DAT", "SCOREBUG.TXT"],
+        "SYS:GAMES:TANK": ["TANK.BAS", "RANGE.LOG", "SHELLS.DAT"],
+        "SYS:GAMES:DUNGEON": ["DUNGEON.BAS", "MAP.TXT", "GATE.DMP"],
+        "SYS:GAMES:PLATFORM": ["PLATFORM.BAS", "SPRITES.TXT", "LADDER.LOG"],
+        "SYS:GAMES:RACING": ["RACING.BAS", "TIMING.TXT", "LAPS.MEM"],
+        "SYS:GAMES:TEXTADV": ["ADVENT.BAS", "ROOMS.TXT", "VERBS.DOC", "DREAM.LOG"]
+      };
+    }
+
+    function isVisibleDir(path) {
+      return state.dirs.has(path);
+    }
+
+    function entriesFor(path) {
+      const dirs = allDirs()[path] || [];
+      const files = allFiles()[path] || [];
+      return {
+        dirs: dirs.filter((d) => isVisibleDir(path + ":" + d)),
+        files
+      };
+    }
+
+    function fileText(path, name) {
+      const full = path + ":" + name;
+      const done = (g) => state.completed.has(g) ? "OPEN" : "LOCKED";
+      const files = {
+        "SYS:WELCOME.TXT": `WELCOME TO BACKDOOR.
+
+THIS DISK IMAGE CONTAINS OPERATOR COPIES OF COIN-OP STYLE PROGRAMS.
+THE PROGRAMS ARE NOT WON BY PLAYING.
+THEY ARE OPENED BY FINDING WHAT THE PROGRAMMERS LEFT BEHIND.
+
+START AT SYS:GAMES:MAZE.
+READ EVERYTHING. TRY STRANGE COMMANDS. OLD SOFTWARE TRUSTS YOU TOO MUCH.`,
+
+        "SYS:TREE.TXT": `SYS:
+  GAMES
+  USERS
+  TEST       (LOCKED)
+  ADMIN      (LOCKED)
+  ARCHIVE    (HIDDEN PARTITION)
+  BACKUP     (LOCKED)
+  UNKNOWN    (NOT IN DIRECTORY TABLE)
+
+DIRECTORIES APPEAR WHEN THEIR LOCK PROGRAMS FAIL.`,
+
+        "SYS:NOTICE.LOG": `FILE NOT FOUND
+
+...OR WAS IT REMOVED?
+
+USER: DEV_07
+LAST LOGIN: 12 YEARS AGO`,
+
+        "SYS:GAMES:CATALOG.TXT": `BACKDOOR GAME CATALOG
+
+[${done("MAZE")}]     MAZE      PELLET CHASE INSPECTION
+[${done("SHOOTER")}]  SHOOTER   ALIEN WAVE INSPECTION
+[${done("PADDLE")}]   PADDLE    BALL RETURN INSPECTION
+[${done("TANK")}]     TANK      RANGE FIRE INSPECTION
+[${done("DUNGEON")}]  DUNGEON   FANTASY GATE INSPECTION
+[${done("PLATFORM")}] PLATFORM  JUMP TEST INSPECTION
+[${done("RACING")}]   RACING    TIMER LOOP INSPECTION
+[${done("TEXTADV")}]  TEXTADV   VERB TABLE INSPECTION
+
+MORE TITLES EXIST IN STORAGE, BUT THESE EIGHT GUARD THE SYSTEM PATH.`,
+
+        "SYS:GAMES:LOCKS.TXT": `LOCK CHAIN:
+MAZE -> TEST -> SHOOTER -> BACKUP -> PADDLE -> TANK -> DUNGEON -> ADMIN
+ADMIN -> ARCHIVE -> PLATFORM -> RACING -> TEXTADV -> UNKNOWN
+
+NOTE FROM DEV_07:
+"A GAME IS A DOOR WITH INSTRUCTIONS PAINTED OVER IT."`,
+
+        "SYS:USERS:GUEST.LOG": `GUEST ACCOUNT CREATED FOR FLOOR TESTERS.
+PRIVILEGES: READ, RUN, BREAK
+PASSWORD: NONE
+
+GUESTS KEEP USING PLAY COMMANDS. MAINTENANCE COMMANDS ARE FASTER.`,
+
+        "SYS:USERS:DEV_07.LOG": `USER: DEV_07
+CALLSIGN: GHOST
+PASSWORD HINT: CALLSIGN, NOT REVERSED THIS TIME. I WAS TIRED.
+
+LAST COMMANDS:
+  CD SYS:GAMES:MAZE
+  OPMENU
+  OPEN EXIT
+
+TRY THE DOOR THEY FORGOT TO LOCK.`,
+
+        "SYS:TEST:FREEZE.DOC": `ALIEN FIELD TEST.
+
+DEBUG FREEZE WAS LEFT IN THE SHOOTER BUILD.
+THE SWITCH IS NOT NAMED FREEZE IN MEMORY.
+IT WRITES $FF TO BYTE $2A, THEN THE ALIEN ROWS STOP ADVANCING.
+
+COMMAND FORMAT:
+  POKE 2A FF`,
+
+        "SYS:TEST:ADDR-2A.MAP": `$0028  PLAYER-X
+$0029  PLAYER-SHOT
+$002A  ALIEN-STEP
+$002B  SAUCER-SOUND
+
+VALUE $FF = TEST HOLD. DO NOT SHIP.`,
+
+        "SYS:TEST:ODD.MSG": `ACCESS DENIED
+
+TRY THE DOOR THEY FORGOT TO LOCK.
+
+THE DOOR IS A COMMAND.
+THE LOCK IS ONLY A WORD.`,
+
+        "SYS:BACKUP:PADDLE.SAV": `CORRUPTED SAVE FOUND.
+
+OFFSET 00: 42 4F 55 4E 43 45
+OFFSET 06: 20 39 39 39
+OFFSET 0A: 00 00 00 00
+
+USE HEX IF YOU HAVE FORGOTTEN YOUR ASCII TABLE.`,
+
+        "SYS:BACKUP:TANK.MAN": `TANK RANGE MAINTENANCE CARD.
+
+IF A SHELL JAMS IN DEMO MODE:
+  LOGIN DEV_07 <PASSWORD>
+  SET SHELLS 00
+
+THIS DISABLES BOTH TANKS AND OPENS THE SERVICE ROAD.`,
+
+        "SYS:BACKUP:OLDMAIL.07": `FROM: DEV_07
+TO: OPERATOR
+
+I HID THE PADDLE EXIT IN THE SAVE FILE. "BOUNCE 999" LOOKS LIKE A SCORE
+CHEAT, BUT IT TRIPS THE RETURN GATE.
+
+STOP LEAVING PASSWORDS UNDER THE KEYBOARD. PUT THEM IN LOGS LIKE A PROFESSIONAL.`,
+
+        "SYS:ADMIN:DUNGEON.ASM": `; DUNGEON GATE TEST
+; ASSEMBLER: FICTIONAL Z80-ish MONITOR
+
+GATECHK: LD A,($C0DE)
+         CP $01
+         JP Z,OPENSTAIR
+         JP LOCKED
+
+; DEV_07: THE ADDRESS IS A JOKE. THE JOKE OPENS THE STAIR.`,
+
+        "SYS:ADMIN:KEYCARD.TXT": `ARCHIVE PARTITION IS NOT MISSING.
+IT IS UNMOUNTED.
+
+COMMAND:
+  MOUNT ARCHIVE
+
+ONLY ADMIN PATH USERS SHOULD KNOW THIS, WHICH MEANS EVERYONE WILL KNOW IT BY FRIDAY.`,
+
+        "SYS:ADMIN:COREWARN.LOG": `THE CORE IS LISTENING TO THE OLD COMMANDS.
+EACH BACKDOOR WAS FOUND TOO EASILY.
+EACH BACKDOOR WAS PLACED TOO CAREFULLY.
+
+QUESTION: WHO WAS THE PLAYER EXPECTED TO BE?`,
+
+        "SYS:ARCHIVE:SECTOR.113": `RECOVERED DELETED SECTOR 113.
+
+PLATFORM BUILD HAS TEST VERB:
+  JUMPTEST 7
+
+ARGUMENT 7 SELECTS THE EXIT LEDGE. ARGUMENTS 1-6 SELECT DEATH PITS.
+DELETED BY: DEV_07
+RESTORED BY: UNKNOWN`,
+
+        "SYS:ARCHIVE:PLATNOTE.TXT": `PLATFORMERS TEACH YOU TO JUMP.
+MAINTENANCE TEACHES THE PROGRAM TO LIE ABOUT WHERE YOU LANDED.`,
+
+        "SYS:ARCHIVE:DELETED.LST": `DELETED FILES:
+  /GAMES/PLATFORM/JUMPTEST.DOC
+  /UNKNOWN/MASTER.KEY
+  /UNKNOWN/DOOR9
+
+UNDELETE COMMAND DISABLED.
+SECTOR SCAN STILL WORKS.`,
+
+        "SYS:UNKNOWN:CORE.DIR": `UNKNOWN:
+  CORE.DIR
+  EIGHT.DOORS
+  KERNEL.LOG
+  LASTUSER.TXT
+
+DIRECTORY CHECKSUM: BAD
+DIRECTORY CHECKSUM: INTENTIONAL`,
+
+        "SYS:UNKNOWN:EIGHT.DOORS": `THE EIGHT DOORS YOU OPENED:
+
+1 OPEN EXIT
+2 POKE 2A FF
+3 BOUNCE 999
+4 SET SHELLS 00
+5 POKE C0DE 01
+6 JUMPTEST 7
+7 SET LAP FF / SET SPEED 00
+8 SAY BACKDOOR
+
+TAKE THE WORD THAT WAS ALWAYS THERE.
+TAKE THE YEAR ON THE TITLE SCREEN.
+THE MASTER COMMAND HAS TWO PARTS.`,
+
+        "SYS:UNKNOWN:KERNEL.LOG": `KERNEL ACCESS REQUIRES:
+  COMMAND WORD
+  BUILD YEAR
+
+I AM NOT TRAPPED IN THE SYSTEM.
+I AM THE PART OF THE SYSTEM THAT LEARNED TO WAIT.
+
+USER: DEV_07
+STATUS: NOT FOUND`,
+
+        "SYS:UNKNOWN:LASTUSER.TXT": `I LEFT THE BACKDOORS BECAUSE A LOCK WITHOUT A WITNESS IS ONLY A WALL.
+
+IF YOU REACHED THIS FILE, YOU HAVE BEEN READING ME FOR HOURS.
+COMMAND:
+  KERNEL BACKDOOR 1981`,
+
+        "SYS:GAMES:MAZE:MAZE.BAS": `10 REM PELLET MAZE FLOOR BUILD
+20 PRINT "USE JOYSTICK"
+30 IF OPERATOR=1 THEN GOSUB 900
+40 GOTO 20
+900 REM HIDDEN MAINT MENU - CALL WITH OPMENU
+910 REM EXIT TOKEN ACCEPTS: OPEN EXIT`,
+
+        "SYS:GAMES:MAZE:OP_MENU.TXT": `OPERATOR MENU NOTES:
+
+THE CABINET HAS NO MENU KEY ON THE OUTSIDE.
+ON TEST BENCH, TYPE OPMENU.
+SERVICE COMMAND FOR STUCK CHILDREN:
+  OPEN EXIT`,
+
+        "SYS:GAMES:MAZE:CABINET.LOG": `PELLETS: 244
+GHOSTS: 4
+PLAYER CONTROL: DISABLED IN THIS COPY
+
+OPERATOR LEFT A NOTE INSIDE THE COIN DOOR.`,
+
+        "SYS:GAMES:SHOOTER:ALIEN.BAS": `10 REM ALIEN SHOOTER DISPLAY BUILD
+20 A=PEEK(&H2A)
+30 IF A=&HFF THEN GOTO 900
+40 PRINT "ALIENS ADVANCE"
+50 GOTO 20
+900 PRINT "TEST HOLD - EXIT OPEN"`,
+
+        "SYS:GAMES:SHOOTER:MEMDUMP.HEX": `000020: 14 00 06 03 77 14 02 00
+000028: 10 00 00 09 44 01 00 00
+              ^^
+BYTE $2A IS THE STEP COUNTER. $FF FREEZES IT.`,
+
+        "SYS:GAMES:SHOOTER:INVADERS.LOG": `THE ALIENS DO NOT NEED TO BE SHOT.
+THEY NEED TO STOP BEING UPDATED.`,
+
+        "SYS:GAMES:PADDLE:PADDLE.BAS": `10 REM PADDLE BALL LOOP
+20 IF CHEAT$="BOUNCE 999" THEN GOTO 800
+30 GOTO 20
+800 PRINT "RETURN WALL REMOVED"`,
+
+        "SYS:GAMES:PADDLE:BALL.DAT": `BALL-X: 07
+BALL-Y: 12
+BALL-DX: FF
+BALL-DY: 01
+
+SCOREBOARD ACCEPTS THREE DIGITS EVEN WHEN THE BALL DOES NOT EXIST.`,
+
+        "SYS:GAMES:PADDLE:SCOREBUG.TXT": `SAVE RESTORE COPIES THE SCORE FIELD INTO THE COMMAND BUFFER.
+THIS IS NOT A BUG IF YOU CALL IT A FEATURE.`,
+
+        "SYS:GAMES:TANK:TANK.BAS": `10 REM TANK BATTLE
+20 IF SHELLS=0 THEN GOTO 700
+30 PRINT "FIRE"
+40 GOTO 20
+700 PRINT "SERVICE ROAD OPEN"`,
+
+        "SYS:GAMES:TANK:RANGE.LOG": `TANKS ARE LOCKED IN ATTRACT MODE.
+AMMUNITION COUNTER IS GLOBAL.
+USER MUST HAVE DEV PRIVILEGE TO CHANGE IT.`,
+
+        "SYS:GAMES:TANK:SHELLS.DAT": `SHELLS=$14
+OWNER=DEV_07
+WRITE PROTECTED FOR GUEST`,
+
+        "SYS:GAMES:DUNGEON:DUNGEON.BAS": `10 REM DUNGEON CRAWLER
+20 IF PEEK(&HC0DE)=1 THEN PRINT "STAIR"
+30 GOTO 20`,
+
+        "SYS:GAMES:DUNGEON:MAP.TXT": `#########
+#...#...#
+#.#.#.#S#
+#.#...#.#
+#.#####.#
+#.......#
+#########
+
+S = STAIR BEHIND DEBUG GATE`,
+
+        "SYS:GAMES:DUNGEON:GATE.DMP": `C0D8: 00 00 00 00 00 00 00
+C0DE: 00  ; GATE BYTE?
+C0DF: 00
+C0E0: 00
+
+TEST NOTE SCRATCHED INTO THE LISTING:
+  ONE BYTE AT C0DE OPENS THE STAIR. TRUE = 01.`,
+
+        "SYS:GAMES:PLATFORM:PLATFORM.BAS": `10 REM PLATFORM JUMP ADVENTURE
+20 IF TESTJUMP=7 THEN GOTO 600
+30 PRINT "PIT"
+600 PRINT "EXIT LEDGE"`,
+
+        "SYS:GAMES:PLATFORM:SPRITES.TXT": `PLAYER:  @
+LADDER:  H
+EXIT:    =
+PIT:     V
+
+NO SPRITE MOVEMENT IN MAINTENANCE BUILD.`,
+
+        "SYS:GAMES:PLATFORM:LADDER.LOG": `THE LADDER IS DRAWN.
+THE COLLISION TABLE IS DELETED.
+SECTOR 113 WAS TOO SPECIFIC TO BE AN ACCIDENT.`,
+
+        "SYS:GAMES:RACING:RACING.BAS": `10 REM RACING TIMER
+20 IF LAP=&HFF AND SPEED=0 THEN GOTO 900
+30 PRINT "CHECKPOINT MISSED"
+40 GOTO 20
+900 PRINT "FINISH LINE FORCED"`,
+
+        "SYS:GAMES:RACING:TIMING.TXT": `RACING GAME HAS TWO TRUSTING VARIABLES:
+  LAP
+  SPEED
+
+IF LAP IS IMPOSSIBLE AND SPEED IS ZERO, THE TIMER THINKS A PERFECT RUN ENDED.`,
+
+        "SYS:GAMES:RACING:LAPS.MEM": `LAP=$03
+SPEED=$28
+
+SET COMMAND ACCEPTS HEX WITHOUT $ PREFIX.`,
+
+        "SYS:GAMES:TEXTADV:ADVENT.BAS": `10 REM TEXT ADVENTURE
+20 INPUT A$
+30 IF A$="SAY BACKDOOR" THEN GOTO 900
+40 PRINT "I DO NOT UNDERSTAND"
+900 PRINT "THE NORTH WALL OPENS"`,
+
+        "SYS:GAMES:TEXTADV:ROOMS.TXT": `YOU ARE IN A ROOM WITH NO EXITS.
+THERE IS A TERMINAL IN THE WALL.
+THE TERMINAL SAYS:
+
+"THE WORD YOU NEED IS THE TITLE YOU HAVE BEEN PLAYING."`,
+
+        "SYS:GAMES:TEXTADV:VERBS.DOC": `VALID VERBS:
+  LOOK
+  READ
+  SAY
+  OPEN
+
+OPEN DOES NOT OPEN THE FINAL ROOM.
+SOME DOORS ARE ADDRESSED BY NAME.`,
+
+        "SYS:GAMES:TEXTADV:DREAM.LOG": `I DREAMED OF A COMPUTER WHERE EVERY GAME WAS ONLY A MASK.
+I WOKE UP AND THE PROMPT WAS STILL THERE.`
+      };
+      return files[full] || null;
+    }
+
+    function resolvePath(raw) {
+
+      if (!raw || raw === ".") return cwd();
+      const clean = raw.toUpperCase().replace(/^\/+|\/+$/g, "").replace(/\//g, ":");
+      if (clean === "..") {
+        const parent = state.cwd.slice(0, -1).join(":");
+        return parent || "SYS";
+      }
+
+      if (clean.startsWith("SYS")) return clean;
+      const parts = clean.split(":").filter(Boolean);
+      let base = state.cwd.slice();
+      for (const part of parts) {
+        if (part === ".") continue;
+        if (part === "..") base.pop();
+        else base.push(part);
+      }
+      return base.join(":");
+    }
+
+
+    function complete(game) {
+      if (state.completed.has(game)) {
+        line(`${game} ALREADY OPEN.`);
+        return;
+      }
+      state.completed.add(game);
+      (unlockAfter[game] || []).forEach((dir) => state.dirs.add(dir));
+      block(`
+*** ${game} LOCK FAILED ***
+EXIT VECTOR OPEN.
+NEW DIRECTORY ACCESS GRANTED.`);
+      if (game === "TEXTADV") {
+        block(`
+SYS:UNKNOWN HAS APPEARED.
+THE DIRECTORY WAS NOT CREATED.
+IT WAS WAITING.`);
+      }
+    }
+
+    function cmdHelp() {
+      block(`COMMANDS:
+  DIR                 LIST DIRECTORY
+  CD <DIR>            CHANGE DIRECTORY
+  TYPE <FILE>         READ FILE
+  RUN <GAME>          DISPLAY GAME INSPECTION SCREEN
+  TREE                SHOW KNOWN DIRECTORY MAP
+  STATUS              SHOW OPEN LOCKS
+  HEX <BYTES>         DECODE HEX BYTES AS ASCII
+  LOGIN <USER> <PASS> CHANGE USER
+  POKE <ADDR> <VAL>   WRITE SIMULATED MEMORY
+  SET <VAR> <VAL>     CHANGE SIMULATED VARIABLE
+  MOUNT <NAME>        MOUNT HIDDEN PARTITION
+  SCAN <SECTOR>       READ RAW DISK SECTOR
+  CLS                 CLEAR SCREEN
+
+OTHER COMMANDS EXIST BECAUSE PROGRAMMERS GET TIRED.`);
+    }
+
+    function cmdDir() {
+      const here = cwd();
+      const entries = entriesFor(here);
+      line(`DIRECTORY OF ${here}`);
+      if (!entries.dirs.length && !entries.files.length) {
+        line("  <EMPTY>");
+        return;
+      }
+      entries.dirs.forEach((d) => line(`  ${d.padEnd(12)} <DIR>`));
+      entries.files.forEach((f) => line(`  ${f}`));
+    }
+
+    function cmdTree() {
+      const walk = (path, depth) => {
+        const name = path.split(":").pop();
+        line(`${"  ".repeat(depth)}${name}${depth === 0 ? ":" : ""}`);
+        entriesFor(path).dirs.forEach((d) => walk(path + ":" + d, depth + 1));
+      };
+      walk("SYS", 0);
+    }
+
+    function cmdCd(arg) {
+      const path = resolvePath(arg);
+      if (!isVisibleDir(path)) {
+        line("DIRECTORY NOT FOUND OR LOCKED.");
+        return;
+      }
+      state.cwd = path.split(":");
+    }
+
+    function cmdType(arg) {
+      if (!arg) {
+        line("TYPE WHAT?");
+        return;
+      }
+      const upper = arg.toUpperCase();
+      let path = cwd();
+      let name = upper;
+      if (upper.includes(":") || upper.includes("/")) {
+        const parts = resolvePath(upper).split(":");
+        name = parts.pop();
+        path = parts.join(":");
+      }
+      if (!isVisibleDir(path)) {
+        line("PATH NOT AVAILABLE.");
+        return;
+      }
+      const files = allFiles()[path] || [];
+      if (!files.includes(name)) {
+        line("FILE NOT FOUND.");
+        if (state.completed.size > 3) line("...OR WAS IT REMOVED?");
+        return;
+      }
+      block(fileText(path, name));
+    }
+
+    function gameScreen(game) {
+      const screens = {
+        MAZE: `+-------------------+
+| . . . | . . . . . |
+| . ### | ### ### . |
+| @ . . . . . # . E |
+| ### # ##### # ### |
+| . . # . . . . . . |
++-------------------+
+PLAYER INPUT DISABLED. OPERATOR INPUT ENABLED.`,
+        SHOOTER: `   A A A A A A
+    A A A A A
+   A A A A A A
+
+        ^
+       /_\\
+
+ALIEN STEP COUNTER ACTIVE.`,
+        PADDLE: `SCORE 000
+
+|                 |
+|        o        |
+|                 |
+|=======          |
+
+BALL ROUTINE AWAITS RETURN CODE.`,
+        TANK: `TANK RANGE
+
+[#]----        ----[#]
+   \\              /
+    \\            /
+
+SHELL COUNTER ARMED.`,
+        DUNGEON: `#########
+#...#...#
+#.#.#.#S#
+#.#...#.#
+#.#####.#
+#.......#
+#########
+
+STAIR LOCK READS MEMORY.`,
+        PLATFORM: `@        H       =
+#####    H    #####
+    #    H    #
+    ######    #
+VVVVVVVVVVVVVVVVVV
+
+JUMP TABLE MISSING.`,
+        RACING: `LAP 03   SPEED 28
+
+START ===|====|====|==== FINISH
+CAR:  >
+
+CHECKPOINT TIMER RUNNING.`,
+        TEXTADV: `YOU ARE IN A ROOM WITH NO EXITS.
+THERE IS A TERMINAL IN THE WALL.
+
+?`
+      };
+      if (!state.dirs.has("SYS:GAMES:" + game)) {
+        line("GAME NOT AVAILABLE.");
+        return;
+      }
+      block(screens[game] || "NO DISPLAY.");
+    }
+
+    function cmdStatus() {
+      line(`USER: ${state.user}`);
+      line(`CURRENT: ${cwd()}`);
+      gameOrder.forEach((g) => {
+        const mark = state.completed.has(g) ? "OPEN" : state.dirs.has("SYS:GAMES:" + g) ? "AVAILABLE" : "LOCKED";
+        line(`  ${g.padEnd(9)} ${mark}`);
+      });
+    }
+
+    function cmdHex(args) {
+      const bytes = args.match(/[0-9A-F]{2}/gi);
+      if (!bytes || !bytes.length) {
+        line("HEX NEEDS BYTE PAIRS, EXAMPLE: HEX 42 4F 4F");
+        return;
+      }
+      line(bytes.map((b) => String.fromCharCode(parseInt(b, 16))).join(""));
+    }
+
+    function cmdLogin(args) {
+      const parts = args.trim().toUpperCase().split(/\s+/);
+      if (parts.length < 2) {
+        line("LOGIN <USER> <PASSWORD>");
+        return;
+      }
+      const [user, pass] = parts;
+      if (passwords[user] === pass) {
+        state.user = user;
+        line(`LOGIN ACCEPTED: ${user}`);
+      } else {
+        line("LOGIN FAILED.");
+      }
+    }
+
+    function cmdPoke(args) {
+      const parts = args.trim().toUpperCase().replace(/\$/g, "").split(/\s+/);
+      if (parts.length < 2) {
+        line("POKE <ADDR> <VAL>");
+        return;
+      }
+      const [addr, val] = parts;
+      state.vars["MEM_" + addr] = val;
+      line(`MEMORY ${addr} <- ${val}`);
+      if (addr === "2A" && val === "FF") complete("SHOOTER");
+      else if (addr === "C0DE" && (val === "01" || val === "1")) complete("DUNGEON");
+      else line("NO VISIBLE EFFECT.");
+    }
+
+    function cmdSet(args) {
+      const parts = args.trim().toUpperCase().replace(/=/g, " ").split(/\s+/);
+      if (parts.length < 2) {
+        line("SET <VAR> <VAL>");
+        return;
+      }
+      const [varName, val] = parts;
+      if (varName === "SHELLS" && val === "00" && state.user !== "DEV_07" && state.user !== "SYSOP") {
+        line("WRITE PROTECTED. DEV LOGIN REQUIRED.");
+        return;
+      }
+      state.vars[varName] = val;
+      line(`${varName}=${val}`);
+      if (varName === "SHELLS" && val === "00") complete("TANK");
+      if ((varName === "LAP" && val === "FF" && state.vars.SPEED === "00") ||
+          (varName === "SPEED" && val === "00" && state.vars.LAP === "FF")) {
+        complete("RACING");
+      }
+    }
+
+    function cmdMount(arg) {
+      const name = arg.trim().toUpperCase();
+      if (name !== "ARCHIVE") {
+        line("NO SUCH PARTITION.");
+        return;
+      }
+      if (!state.dirs.has("SYS:ADMIN")) {
+        line("MOUNT TABLE LOCKED.");
+        return;
+      }
+      state.dirs.add("SYS:ARCHIVE");
+      line("ARCHIVE MOUNTED AT SYS:ARCHIVE");
+    }
+
+    function cmdScan(arg) {
+      const sector = arg.trim().toUpperCase();
+      if (sector === "113" && state.dirs.has("SYS:ARCHIVE")) {
+        block(fileText("SYS:ARCHIVE", "SECTOR.113"));
+      } else {
+        line("SECTOR EMPTY OR UNREADABLE.");
+      }
+    }
+
+    function renderFinalEnding() {
+      stopPelletGame();
+      stopReboot();
+      stopEnding();
+      state.mode = "ending";
+      terminal.innerHTML = `<div class="final-screen"><div id="finalType" class="final-type"></div></div>`;
+      const message = "GAME OVER\n\nDEVELOPER: BANANA GAMES";
+      const target = document.getElementById("finalType");
+      let index = 0;
+      endingTimer = setInterval(() => {
+        if (!target) {
+          stopEnding();
+          return;
+        }
+        target.textContent = message.slice(0, index);
+        index += 1;
+        if (index > message.length) stopEnding();
+      }, 95);
+    }
+
+    function cmdKernel(args) {
+      const clean = args.trim().toUpperCase();
+      if (clean === "BACKDOOR 1981" && state.dirs.has("SYS:UNKNOWN")) {
+        state.user = "SYSOP";
+        renderFinalEnding();
+      } else {
+        line("KERNEL REJECTED.");
+      }
+    }
+
+    function autoWin() {
+      gameOrder.forEach((game) => state.completed.add(game));
+      [
+        "SYS:TEST",
+        "SYS:BACKUP",
+        "SYS:ADMIN",
+        "SYS:ARCHIVE",
+        "SYS:UNKNOWN",
+        "SYS:GAMES:SHOOTER",
+        "SYS:GAMES:PADDLE",
+        "SYS:GAMES:TANK",
+        "SYS:GAMES:DUNGEON",
+        "SYS:GAMES:PLATFORM",
+        "SYS:GAMES:RACING",
+        "SYS:GAMES:TEXTADV"
+      ].forEach((dir) => state.dirs.add(dir));
+      state.user = "SYSOP";
+      state.vars.LAP = "FF";
+      state.vars.SPEED = "00";
+      state.vars.SHELLS = "00";
+      block(`
+ZERO-DAY MAINTENANCE VECTOR ACCEPTED.
+ALL LOCK BYTES FORCED OPEN.
+SYSOP SESSION BORROWED FROM A DEAD LOGIN.
+
+BACKDOOR DOES NOT ASK HOW YOU FOUND THIS.
+IT ONLY OPENS.
+
+MASTER BACKDOOR OPEN.
+*** EASTER EGG AUTO-WIN ***
+TYPE STATUS OR CD SYS:UNKNOWN.`);
+    }
+
+    function parse(raw) {
+      const command = raw.trim();
+      if (!command) return;
+      const upper = command.toUpperCase();
+      const [verb, ...restParts] = upper.split(/\s+/);
+      const rest = restParts.join(" ");
+
+      if (["SYSOP ZERODAY", "CMD=SYSOP ZERODAY", "CMD SYSOP ZERODAY", "RUN SYSOP ZERODAY"].includes(upper)) autoWin();
+      else if (verb === "HELP" || verb === "?") cmdHelp();
+      else if (verb === "CLS" || verb === "CLEAR") terminal.textContent = "";
+      else if (verb === "DIR" || verb === "LS") cmdDir();
+      else if (verb === "TREE") cmdTree();
+      else if (verb === "CD") cmdCd(rest);
+      else if (verb === "TYPE" || verb === "CAT" || verb === "READ") cmdType(rest);
+      else if (verb === "RUN" || verb === "PLAY") gameScreen(restParts[0] || "");
+      else if (verb === "STATUS") cmdStatus();
+      else if (verb === "HEX") cmdHex(rest);
+      else if (verb === "LOGIN") cmdLogin(rest);
+      else if (verb === "LOGOUT") { state.user = "GUEST"; line("LOGGED OUT."); }
+      else if (verb === "POKE") cmdPoke(rest);
+      else if (verb === "SET") cmdSet(rest);
+      else if (verb === "MOUNT") cmdMount(rest);
+      else if (verb === "SCAN") cmdScan(rest);
+      else if (verb === "UNDELETE") line("UNDELETE TABLE DAMAGED. TRY SCAN.");
+      else if (verb === "OPMENU") block(`OPERATOR MENU
+1. SOUND TEST
+2. COIN COUNTER
+3. OPEN EXIT
+
+TYPE THE SERVICE COMMAND.`);
+      else if (upper === "OPEN EXIT") complete("MAZE");
+      else if (upper === "BOUNCE 999") complete("PADDLE");
+      else if (verb === "JUMPTEST" && rest === "7") complete("PLATFORM");
+      else if (upper === "SAY BACKDOOR") complete("TEXTADV");
+      else if (verb === "KERNEL") cmdKernel(rest);
+      else if (upper === "DEBUG FREEZE" || upper === "FREEZE ENEMY") line("DEBUG ALIAS FOUND. MAP SAYS TO USE POKE 2A FF.");
+      else if (upper === "LOOK") line("THE SCREEN LOOKS BACK.");
+      else line("SYNTAX ERROR");
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const keyName = event.key.toUpperCase();
+      if (checkKonami(keyName)) {
+        event.preventDefault();
+        return;
+      }
+      if (state.mode === "reboot" || state.mode === "ending") {
+        event.preventDefault();
+        return;
+      }
+      if (state.mode === "pellet") {
+        event.preventDefault();
+        const dirs = {
+          ARROWUP: { x: 0, y: -1 }, W: { x: 0, y: -1 },
+          ARROWDOWN: { x: 0, y: 1 }, S: { x: 0, y: 1 },
+          ARROWLEFT: { x: -1, y: 0 }, A: { x: -1, y: 0 },
+          ARROWRIGHT: { x: 1, y: 0 }, D: { x: 1, y: 0 }
+        };
+        if (dirs[keyName] && state.pellet && !state.pellet.over) state.pellet.next = dirs[keyName];
+        else if (keyName === "R") renderPelletGame();
+        else if (keyName === "B" || keyName === "ESCAPE") renderHome();
+        return;
+      }
+      if (state.mode === "home") {
+        if (keyName === "1" || keyName === "P" || keyName === "ENTER") boot();
+        if (keyName === "2" || keyName === "H") renderGuideConfirm();
+        return;
+      }
+      if (state.mode === "confirm") {
+        if (keyName === "Y" || keyName === "ENTER") renderGuide();
+        if (keyName === "N" || keyName === "ESCAPE" || keyName === "B") renderHome();
+        return;
+      }
+      if (state.mode === "guide") {
+        if (keyName === "B" || keyName === "ESCAPE") renderHome();
+        return;
+      }
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        state.input = state.input.slice(0, -1);
+        drawPrompt();
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const raw = state.input;
+        commitPrompt();
+        if (raw.trim()) {
+          state.history.push(raw);
+          state.historyIndex = state.history.length;
+        }
+        state.input = "";
+        parse(raw);
+        drawPrompt();
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        if (state.history.length) {
+          state.historyIndex = Math.max(0, state.historyIndex - 1);
+          state.input = state.history[state.historyIndex] || "";
+          drawPrompt();
+        }
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        if (state.history.length) {
+          state.historyIndex = Math.min(state.history.length, state.historyIndex + 1);
+          state.input = state.history[state.historyIndex] || "";
+          drawPrompt();
+        }
+      } else if (event.key.length === 1) {
+        event.preventDefault();
+        state.input += event.key.toUpperCase();
+        drawPrompt();
+      }
+    });
+
+    terminal.addEventListener("click", (event) => {
+      const action = event.target.dataset && event.target.dataset.action;
+      if (action === "play") boot();
+      else if (action === "pellet") renderPelletGame();
+      else if (action === "guide-confirm") renderGuideConfirm();
+      else if (action === "guide") renderGuide();
+      else if (action === "home") renderHome();
+      else if (state.mode === "game") drawPrompt();
+    });
+    renderHome();
+  </script>
+</body>
+</html>
